@@ -1,0 +1,15 @@
+[project]
+name = "debugging-code-agent"
+version = "0.1.0"
+description = "Self-debugging code agent for LeetCode-style problems"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "datasets>=4.7.0",
+    "langchain-ollama>=1.0.1",
+    "langgraph>=1.1.2",
+    "textual>=8.1.1",
+]
+
+[project.scripts]
+debugging-code-agent = "debugging_code_agent.cli:main"
