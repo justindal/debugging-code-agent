@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from langchain_ollama import ChatOllama
+from langchain_core.language_models.chat_models import BaseChatModel
 
 from debugging_code_agent.agent.execution import PASS_MARKER
 from debugging_code_agent.agent.state import AgentState
@@ -58,7 +58,7 @@ def _extract_first_failure_details(output: str) -> str:
     return ""
 
 
-def llm_call(state: AgentState, model: ChatOllama) -> dict:
+def llm_call(state: AgentState, model: BaseChatModel) -> dict:
     """
     Ask the LLM to write (or rewrite) a Python solution.
     Returns whether we should route to the tool node.

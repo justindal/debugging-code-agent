@@ -8,6 +8,7 @@ from typing import Any
 from debugging_code_agent.agent.graph import build_graph
 from debugging_code_agent.agent.state import AgentState
 from debugging_code_agent.dataset import get_problems
+from debugging_code_agent.llm import Provider
 from debugging_code_agent.selector import Selector
 from debugging_code_agent.utils import pick_value
 
@@ -120,7 +121,14 @@ def run_problem(
     return final_state, tests
 
 
-def run_selected_problems(max_attempts: int = 5) -> None:
+def run_selected_problems(
+    max_attempts: int = 5,
+    provider: Provider = "ollama",
+    model: str = "llama3.1",
+    temperature: float = 0.1,
+    base_url: str | None = None,
+    api_key: str | None = None,
+) -> None:
     problems = get_problems()
     selected = Selector(problems).run()
     selected_ids = [str(task_id) for task_id in (selected or [])]
@@ -129,7 +137,13 @@ def run_selected_problems(max_attempts: int = 5) -> None:
         return
 
     problems_by_id = _problem_index(problems)
-    graph = build_graph()
+    graph = build_graph(
+        provider=provider,
+        model=model,
+        temperature=temperature,
+        base_url=base_url,
+        api_key=api_key,
+    )
     results: list[dict[str, Any]] = []
 
     for task_id in selected_ids:

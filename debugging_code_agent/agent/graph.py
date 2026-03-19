@@ -1,11 +1,11 @@
 from typing import Literal
 
-from langchain_ollama import ChatOllama
 from langgraph.graph import END, START, StateGraph
 
 from debugging_code_agent.agent.execution import execute_code_against_tests
 from debugging_code_agent.agent.nodes import llm_call, tool_node
 from debugging_code_agent.agent.state import AgentState
+from debugging_code_agent.llm import Provider, create_chat_model
 
 
 def should_continue(state: AgentState) -> Literal["tool_node", "__end__"]:
@@ -17,11 +17,23 @@ def should_continue(state: AgentState) -> Literal["tool_node", "__end__"]:
     return END
 
 
-def build_graph(model: str = "llama3.1", temperature: float = 0.1):
+def build_graph(
+    provider: Provider = "ollama",
+    model: str = "llama3.1",
+    temperature: float = 0.1,
+    base_url: str | None = None,
+    api_key: str | None = None,
+):
     """
     Build and compile the agent graph.
     """
-    model_client = ChatOllama(model=model, temperature=temperature)
+    model_client = create_chat_model(
+        provider=provider,
+        model=model,
+        temperature=temperature,
+        base_url=base_url,
+        api_key=api_key,
+    )
     tools_by_name = {
         "run_tests": execute_code_against_tests,
     }
