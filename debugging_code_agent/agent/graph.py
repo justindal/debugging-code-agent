@@ -23,6 +23,11 @@ def build_graph(
     temperature: float = 0.1,
     base_url: str | None = None,
     api_key: str | None = None,
+    top_p: float = 0.9,
+    top_k: int = 40,
+    min_p: float = 0.0,
+    repeat_penalty: float = 1.05,
+    seed: int | None = 42,
 ):
     """
     Build and compile the agent graph.
@@ -33,6 +38,11 @@ def build_graph(
         temperature=temperature,
         base_url=base_url,
         api_key=api_key,
+        top_p=top_p,
+        top_k=top_k,
+        min_p=min_p,
+        repeat_penalty=repeat_penalty,
+        seed=seed,
     )
     tools_by_name = {
         "run_tests": execute_code_against_tests,

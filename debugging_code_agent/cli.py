@@ -50,9 +50,47 @@ def main() -> None:
         default=5,
         help="Maximum solve attempts per selected problem.",
     )
+    parser.add_argument(
+        "--top-p",
+        type=float,
+        default=0.9,
+        help="Nucleus sampling probability.",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=40,
+        help="Top-k sampling cutoff.",
+    )
+    parser.add_argument(
+        "--min-p",
+        type=float,
+        default=0.0,
+        help="Minimum probability threshold (0 disables).",
+    )
+    parser.add_argument(
+        "--repeat-penalty",
+        type=float,
+        default=1.05,
+        help="Penalty applied to repeated tokens.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Sampling seed for reproducibility.",
+    )
     args = parser.parse_args()
     if args.provider == "server" and not args.base_url:
         parser.error("--base-url is required when --provider server is used.")
+    if not 0.0 < args.top_p <= 1.0:
+        parser.error("--top-p must be in (0, 1].")
+    if args.top_k < 0:
+        parser.error("--top-k must be >= 0.")
+    if not 0.0 <= args.min_p < 1.0:
+        parser.error("--min-p must be in [0, 1).")
+    if args.repeat_penalty <= 0.0:
+        parser.error("--repeat-penalty must be > 0.")
     run_selected_problems(
         max_attempts=args.max_attempts,
         provider=args.provider,
@@ -60,4 +98,9 @@ def main() -> None:
         temperature=args.temperature,
         base_url=args.base_url,
         api_key=args.api_key,
+        top_p=args.top_p,
+        top_k=args.top_k,
+        min_p=args.min_p,
+        repeat_penalty=args.repeat_penalty,
+        seed=args.seed,
     )

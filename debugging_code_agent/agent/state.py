@@ -1,12 +1,16 @@
-from typing import Any, Optional, TypedDict
+import operator
+from typing import Annotated, Any, Optional, TypedDict
 
 
 class AgentState(TypedDict):
+    difficulty: str
+    tags: str
     problem: str
     entry_point: str
     starter_code: str
     test_code: str
     examples: list[dict[str, Any]]
+    messages: Annotated[list, operator.add]
     code: Optional[str]
     output: Optional[str]
     error: Optional[str]

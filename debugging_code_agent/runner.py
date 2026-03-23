@@ -20,7 +20,7 @@ def _problem_index(records: Iterable[Any]) -> dict[str, Mapping[str, Any]]:
     for record in records:
         if not isinstance(record, Mapping):
             continue
-        task_id = pick_value(record, "task_id", "id", "_id", default="").strip()
+        task_id = pick_value(record, "slug", "task_id", "id", "_id", default="").strip()
         if task_id:
             indexed[task_id] = record
     return indexed
@@ -66,9 +66,12 @@ def _parse_test_summary(output: str) -> tuple[int, int]:
 def run_problem(
     graph, problem: Mapping[str, Any], max_attempts: int = 5
 ) -> tuple[AgentState, dict[str, Any]]:
-    problem_id = pick_value(problem, "task_id", "id", "_id", default="<unknown>")
+    problem_id = pick_value(problem, "slug", "task_id", "id", "_id", default="<unknown>")
+    difficulty = pick_value(problem, "difficulty", "level", default="")
+    tags = pick_value(problem, "tags", "topic_tags", "topics", default="")
     problem_text = pick_value(
         problem,
+        "problem",
         "problem_description",
         "description",
         "prompt",
@@ -77,15 +80,18 @@ def run_problem(
     )
     entry_point = pick_value(problem, "entry_point", default="")
     starter_code = pick_value(problem, "starter_code", default="")
-    test_code = pick_value(problem, "test", default="")
+    test_code = pick_value(problem, "test_code", "test", default="")
     examples = _examples(problem)
     tests: dict[str, Any] = {"assert_count": _count_asserts(test_code)}
     initial_state: AgentState = {
+        "difficulty": difficulty,
+        "tags": tags,
         "problem": problem_text,
         "entry_point": entry_point,
         "starter_code": starter_code,
         "test_code": test_code,
         "examples": examples,
+        "messages": [],
         "code": None,
         "output": None,
         "error": None,
@@ -99,6 +105,10 @@ def run_problem(
 
     print(f"\n{'=' * 72}")
     print(f"Problem: {problem_id}")
+    if difficulty:
+        print(f"Difficulty: {difficulty}")
+    if tags:
+        print(f"Topics: {_compact(tags)}")
     print(f"Prompt: {_compact(problem_text)}")
 
     final_state = graph.invoke(initial_state)
@@ -128,6 +138,11 @@ def run_selected_problems(
     temperature: float = 0.1,
     base_url: str | None = None,
     api_key: str | None = None,
+    top_p: float = 0.9,
+    top_k: int = 40,
+    min_p: float = 0.0,
+    repeat_penalty: float = 1.05,
+    seed: int | None = 42,
 ) -> None:
     problems = get_problems()
     selected = Selector(problems).run()
@@ -143,6 +158,11 @@ def run_selected_problems(
         temperature=temperature,
         base_url=base_url,
         api_key=api_key,
+        top_p=top_p,
+        top_k=top_k,
+        min_p=min_p,
+        repeat_penalty=repeat_penalty,
+        seed=seed,
     )
     results: list[dict[str, Any]] = []
 

@@ -1,16 +1,43 @@
 import ast
 import os
+import re
 import subprocess
 import sys
 import tempfile
 
 PASS_MARKER = "ALL_TESTS_PASSED"
+
+_NAME_NORM_RE = re.compile(r"[_\s]+")
+
+
+def _resolve_candidate_expr(code: str, entry_point: str) -> str:
+    if "class Solution" in code:
+        return entry_point
+
+    method = entry_point.split(".")[-1] if "." in entry_point else entry_point
+    method_norm = _NAME_NORM_RE.sub("", method).lower()
+
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return method
+
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef):
+            if _NAME_NORM_RE.sub("", node.name).lower() == method_norm:
+                return node.name
+    funcs = [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
+    return funcs[-1] if funcs else method
 IMPORT_PRELUDE = """import random
 import functools
 import collections
 import string
 import math
 import datetime
+import sys
+import re
+import copy
+import queue
 
 from typing import *
 from functools import *
@@ -314,6 +341,7 @@ def execute_code_against_tests(
         return _test_runner_error(str(exc))
 
     instrumented_test_code, expected_total = instrumented_tests
+    candidate_expr = _resolve_candidate_expr(code, entry_point)
     test_runner = f"""{IMPORT_PRELUDE}
 
 {code}
@@ -349,7 +377,7 @@ def __record_case(index, input_text, expected, actual, passed, error=""):
     _CASE_RESULTS.append(bool(passed))
 
 if __name__ == "__main__":
-    candidate = {entry_point}
+    candidate = {candidate_expr}
     check_error = ""
     try:
         check(candidate)
@@ -360,10 +388,13 @@ if __name__ == "__main__":
         print(f"[tests] fatal-error: {{check_error}}")
 
     passed = sum(1 for value in _CASE_RESULTS if value)
-    total = len(_CASE_RESULTS)
+    executed = len(_CASE_RESULTS)
+    total = _EXPECTED_TOTAL
     print(f"[tests] summary: {{passed}}/{{total}} passed")
+    if executed < total:
+        print(f"[tests] executed: {{executed}}/{{total}} (stopped on first failure)")
 
-    if not check_error and total > 0 and passed == total:
+    if not check_error and total > 0 and passed == total and executed == total:
         print("{PASS_MARKER}")
     else:
         raise SystemExit(1)

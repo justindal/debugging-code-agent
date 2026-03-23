@@ -28,7 +28,7 @@ class ProblemRow:
     @classmethod
     def from_record(cls, record: Mapping[str, Any]) -> ProblemRow:
         return cls(
-            task_id=pick_value(record, "task_id", "id", "_id", default=""),
+            task_id=pick_value(record, "slug", "task_id", "id", "_id", default=""),
             difficulty=pick_value(record, "difficulty", "level", default=""),
             tags=pick_value(record, "tags", "topic_tags", "topics", default=""),
         )
